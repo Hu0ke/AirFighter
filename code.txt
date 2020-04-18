@@ -1,0 +1,131 @@
+Option Explicit
+Dim n As Integer '子弹编码
+Dim a(0 To 9) As Boolean '子弹可用性
+Dim lv As Integer '等级
+Dim kill As Integer '击杀量
+Dim i As Integer
+Dim k As Integer
+Private Sub form_load()
+n = 0                '初始化
+kill = 0
+lv = 1
+Lablv.Caption = "Lv." & lv '等级标签属性
+Lablv.FontSize = 20
+Lablv.AutoSize = True
+Lablv.BackStyle = 0
+Lablv.ForeColor = vbYellow
+
+Label3.BackColor = vbRed '血量标签属性
+Label3.Left = 0
+Label3.Width = Me.Width
+Label3.Height = Me.Height / 15
+Label3.Top = Me.Height - Label3.Height
+
+shape1(n).BackColor = RGB(Rnd * 255, Rnd * 255, Rnd * 255) '等级一的子弹颜色
+For i = 0 To 9 '初始化子弹属性可用性敌军属性
+    shape1(i).Height = 155
+    shape1(i).Width = 275
+    shape1(i).BackStyle = 1
+    shape1(i).BorderStyle = 0
+    shape1(i).Visible = False
+    Timer1(i).Enabled = False
+    Timer1(i).Interval = 10
+    a(i) = True
+    Image2(Int(i / 2)).Height = 500
+    Image2(Int(i / 2)).Width = 500
+    Image2(Int(i / 2)).Picture = LoadPicture("1.jpg")
+    Image2(Int(i / 2)).Stretch = True
+Next i
+End Sub
+Private Sub form_KeyPress(KeyAscii As Integer)
+If a(n) = True Then
+    Select Case KeyAscii          '空格键发射触发
+    Case 32
+        shape1(n).Left = Image1.Left + 1 / 2 * (Image1.Width) - 200
+        shape1(n).Top = Image1.Top
+        shape1(n).Visible = True
+        a(n) = False
+        Timer1(n).Enabled = True
+        n = n + 1
+        If n = lv Then n = 0
+    End Select
+End If
+End Sub
+
+Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
+Select Case KeyCode                  '方向键移动触发
+Case 65
+    Image1.Left = Image1.Left - 200
+Case 68
+    Image1.Left = Image1.Left + 200
+Case 87
+    Image1.Top = Image1.Top - 200
+Case 83
+    Image1.Top = Image1.Top + 200
+End Select
+                                                                
+If Image1.Left < 0 Then Image1.Left = 0 '限制自由移动范围
+If Image1.Top < 0 Then Image1.Top = 0
+If Image1.Left > Me.Width - Image1.Width Then Image1.Left = Me.Width - Image1.Width
+If Image1.Top > Me.Height - Image1.Height - 600 Then Image1.Top = Me.Height - Image1.Height - 600
+End Sub
+
+Private Sub Timer1_Timer(n As Integer)
+Timer1(n).Enabled = True
+shape1(n).Top = shape1(n).Top - 50
+For i = 0 To 4                                               '检测敌军状态
+    If shape1(n).Top < 0 Then                                'if情况一：子弹打空判定
+        Timer1(n).Enabled = False
+        shape1(n).Visible = False
+        a(n) = True
+    End If
+    If ((shape1(n).Top <= Image2(i).Top And shape1(n).Left >= Image2(i).Left _
+        And shape1(n).Left <= Image2(i).Left + Image2(i).Width)) Then 'if情况二：子弹击中判定
+            kill = kill + 1 '击杀数加一
+                If kill Mod 5 = 0 Then Call lvup '击杀5个升一级
+            shape1(n).BackColor = RGB(Rnd * 255, Rnd * 255, Rnd * 255)
+            Timer1(n).Enabled = False
+            shape1(n).Visible = False
+            a(n) = True
+            Image2(i).Top = -Image2(i).Height '敌军返回屏幕顶端随机位置
+            Image2(i).Left = Int(Rnd * (Me.Width - Image2(i).Width - 200))
+    End If
+Next i
+End Sub
+
+Private Sub Timer2_Timer()
+For k = 0 To 4      '所有方块下降并循环
+    Image2(k).Top = Image2(k).Top + 50
+    If Image2(k).Top >= Me.Height Then
+            Label3.Width = Label3.Width - 500
+            Label3.Left = Label3.Left + 225
+            Image2(k).Top = -Image2(k).Height '敌军返回屏幕顶端随机位置
+            Image2(k).Left = Int(Rnd * (Me.Width - Image2(k).Width - 200))
+    End If
+Next k
+If Label3.Width <= 400 Then
+    Unload Me
+    If kill >= 0 And kill < 20 Then
+        MsgBox "击杀数：" & kill & vbCrLf & "真的垃圾啊！", , "评价"
+    ElseIf kill >= 20 And kill < 50 Then
+        MsgBox "击杀数：" & kill & vbCrLf & "垃圾啊！", , "评价"
+    ElseIf kill >= 50 And kill <= 80 Then
+        MsgBox "击杀数：" & kill & vbCrLf & "可以的！", , "评价"
+    Else
+        MsgBox "击杀数：" & kill & vbCrLf & "你就是我的游戏测试员了！", , "评价"
+    End If
+End If
+End Sub
+
+Public Sub lvup()
+    lv = lv + 1
+    Timer2.Interval = 60
+    Timer2.Interval = Timer2.Interval - lv * 4
+    If lv = 10 Then lv = 9
+    Lablv.Caption = "Lv." & lv
+    Label3.Left = Label3.Left - 225
+    Label3.Width = Label3.Width + 500
+    If Label3.Width >= 7335 Then Label3.Width = 7335: Label3.Left = 0
+    Lablv.ForeColor = RGB(Rnd * 255, Rnd * 255, Rnd * 255)
+End Sub
+
